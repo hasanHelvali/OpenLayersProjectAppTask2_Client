@@ -10,12 +10,14 @@ import { MyModalComponent } from './components/my-modal/my-modal.component';
 import { BaseComponent } from './common/base/base.component';
 import { NgxSpinnerModule } from 'ngx-spinner';
 import { GeometryListModalComponent } from './components/geometry-list-modal/geometry-list-modal.component';
+import { Map2Component } from './components/map2/map2.component';
 @NgModule({
   declarations: [
     AppComponent,
     MapComponent,
     MyModalComponent,
     GeometryListModalComponent,
+    Map2Component,
   ],
   imports: [
     BrowserModule,
