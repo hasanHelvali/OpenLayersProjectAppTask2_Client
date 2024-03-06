@@ -27,7 +27,7 @@ import { Map2Component } from './components/map2/map2.component';
     NgxSpinnerModule,
     BrowserAnimationsModule,
   ],
-  providers: [{provide:"baseUrl",useValue:"https://localhost:7053/api"},MyModalComponent,GeometryListModalComponent],
+  providers: [{provide:"baseUrl",useValue:"https://localhost:7295/api"},MyModalComponent,GeometryListModalComponent],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

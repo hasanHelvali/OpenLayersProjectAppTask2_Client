@@ -1,13 +1,14 @@
 import { Component, ElementRef, Injectable, OnInit, ViewChild } from '@angular/core';
 import { NgxSpinnerService } from 'ngx-spinner';
 import { BaseComponent } from 'src/app/common/base/base.component';
-import { GeoLocation } from 'src/app/models/geo-location';
+import { GeoLocation, IGeoLocation } from 'src/app/models/geo-location';
 import { LocAndUsers } from 'src/app/models/locAndUsers';
 import { LocationAndUsers } from 'src/app/models/location-and-users';
 import { CustomHttpClient } from 'src/app/services/customHttpClient.service';
+import { GeneralDataService } from 'src/app/services/general-data.service';
 import { LocDataService } from 'src/app/services/loc-data.service';
 
-// declare var $:any;
+declare var $:any;
 @Injectable({
   providedIn: 'root'
 })
@@ -22,23 +23,25 @@ export class MyModalComponent extends BaseComponent implements OnInit {
 
   data:GeoLocation
   data2:LocAndUsers;
+  wkt:string;
   locationAndUser:LocationAndUsers=new LocationAndUsers();
   locAndUsers:LocAndUsers=new LocAndUsers();
 
-  constructor(private locDataService:LocDataService,private httpClient:CustomHttpClient,spinner:NgxSpinnerService) {
+  coordinatesAndType:IGeoLocation;
+  constructor(private locDataService:LocDataService,private httpClient:CustomHttpClient,spinner:NgxSpinnerService,public generalDataService:GeneralDataService) {
     super(spinner)
    }
   ngOnInit(): void {
-    this.data=this.locDataService.data;
-    this.data2=this.locDataService.data2;
-    // if(this.data!=null)
-    //   this.openModal();
-    if(this.data2!=null)
+    console.log("---------------");
+    // this.data=this.locDataService.data;
+    this.data=this.generalDataService.location;
+    this.wkt=this.generalDataService._wkt;
+    if(this.generalDataService.location){
+      console.log("--------------------");
       this.openModal();
+    }
   }
   openModal() {
-    // this.myModal.nativeElement.style.display = 'block';
-    
     const modelDiv=document.getElementById("myModal")
     if(modelDiv!=null){
       modelDiv.style.display="block"
@@ -48,7 +51,7 @@ export class MyModalComponent extends BaseComponent implements OnInit {
     const modelDiv=document.getElementById("myModal")
     if(modelDiv!=null)
       modelDiv.style.display="none"
-      this.locDataService.data=null;
+      this.generalDataService.location=null;
       this.locDataService.data2=null;
     }
 
@@ -56,13 +59,13 @@ export class MyModalComponent extends BaseComponent implements OnInit {
       this.showSpinner();
       this.locationAndUser.coordinates=this.data.coordinates
       // console.log(this.data.coordinates);
-      this.locationAndUser.type=this.data.type
+      this.locationAndUser.type=this.generalDataService.location.type
       this.locationAndUser.name=name
       // console.log({name:this.locAndUser.name,coordinates:this.locAndUser.coordinates,type:this.locAndUser.type});
       // console.log(this.locationAndUser);
 
       this.locAndUsers.name=name;
-      this.locAndUsers.wkt=this.data2.wkt;
+      this.locAndUsers.wkt=this.generalDataService._wkt;
 
       console.log(this.locAndUsers);
       
@@ -75,7 +78,7 @@ export class MyModalComponent extends BaseComponent implements OnInit {
         this.hideSpinner()
         alert("Veri Kaydedilmiştir.");
         this.closeModal();
-      },
+      }, 
       error:(err)=>{
         this.hideSpinner();
         alert("Veri Eklenirken bir hata oluştu");

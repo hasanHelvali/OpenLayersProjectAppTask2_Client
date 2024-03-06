@@ -8,8 +8,8 @@
         <div class="modal-body">
             <form class="form">
                 <input type="text" class="form-control" placeholder="İsim" #name>
-                <label class="form-control-plaintext  " for="">Feature : {{data.type}}</label> <br>
-                <textarea class="form-control-plaintext " style="resize: none;width: 100%; height: 100px;" [disabled]="true">Coordinates : {{data.coordinates}}</textarea>
+                <label class="form-control-plaintext  " for="">Feature : {{generalDataService.location?.type}}</label> <br>
+                <textarea class="form-control-plaintext " style="resize: none;width: 100%; height: 100px;" [disabled]="true" >Coordinates : {{generalDataService.location?.coordinates}}</textarea>
             </form>
         </div>
         <div class="modal-footer">

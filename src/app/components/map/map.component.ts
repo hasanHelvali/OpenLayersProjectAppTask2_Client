@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, Type, numberAttribute } from '@angular/core';
 import Map from 'ol/Map';
 import { Draw, Modify, Snap } from 'ol/interaction';
 import TileLayer from 'ol/layer/Tile';
@@ -6,26 +6,18 @@ import VectorLayer from 'ol/layer/Vector';
 import { fromLonLat, get } from 'ol/proj';
 import OSM from 'ol/source/OSM';
 import VectorSource from 'ol/source/Vector';
-import { CustomHttpClient } from 'src/app/services/customHttpClient.service';
 import { MyModalComponent } from '../my-modal/my-modal.component';
-import { View } from 'ol';
 import { LocDataService } from 'src/app/services/loc-data.service';
-import { Geometry, Point } from 'ol/geom';
-import { GeoLocation } from 'src/app/models/geo-location';
-import WKT from 'ol/format/WKT';
-import { GeometryListModalComponent } from '../geometry-list-modal/geometry-list-modal.component';
-import { LocAndUsers } from 'src/app/models/locAndUsers';
+import {  Circle, Geometry, LineString, Point, Polygon } from 'ol/geom';
 import { BaseComponent } from 'src/app/common/base/base.component';
 import { NgxSpinnerService } from 'ngx-spinner';
-import { loadFeaturesXhr } from 'ol/featureloader';
 import { GeneralDataService } from 'src/app/services/general-data.service';
-import Source from 'ol/source/Source';
 import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
-import { every } from 'rxjs';
-import Vector from 'ol/source/Vector';
-
+import { View } from 'ol';
+import { LocalizedString } from '@angular/compiler';
+import { IGeoLocation } from 'src/app/models/geo-location';
 @Component({
   selector: 'app-map',
   templateUrl: './map.component.html',
@@ -39,7 +31,7 @@ export class MapComponent extends BaseComponent implements OnInit {
   //     super(spinner)
   //     this.locDataService.veriOlusturulduSubject.subscribe((veri)=>{
   //       console.log("veri geldi");
-  //       this.getGeometryBywkt(veri);
+  //       this.getGeometryBywkt(veri);----------------------------------------------------------------------------------------------------------------------------
   //       this._options="";
 
   //     })
@@ -84,7 +76,7 @@ export class MapComponent extends BaseComponent implements OnInit {
 
   // mapDraw(draw):any{
   //   //This keyword unu degistirdim.
-  //   let _that=this;-----------------------------------------------------------------------------------------------------------------------------
+  //   let _that=this;-
   //   this.map.on('click', (event) => {
   //     const coordinateLong = event.coordinate[0];
   //     const coordinateLat = event.coordinate[1];
@@ -212,7 +204,7 @@ export class MapComponent extends BaseComponent implements OnInit {
   //   this.modalComponent.openModal();
   // }
 
-  // getGeometryModal(){
+  // (){
   //   this.showSpinner();
   //   this.httpCLient.get<LocAndUsers>({controller:"maps"}).subscribe({
   //     next:(data)=>{
@@ -304,13 +296,22 @@ export class MapComponent extends BaseComponent implements OnInit {
    *
    */
   map: Map;
+  vectorLayer:any;
   options = '';
   constructor(
     ngxSpinner: NgxSpinnerService,
-    public generalDataService: GeneralDataService
+    public generalDataService: GeneralDataService,
+    public mymodal:MyModalComponent,
+    public locDataService:LocDataService
   ) {
     super(ngxSpinner);
+    this.locDataService.veriOlusturulduSubject.subscribe((veri)=>{
+      this.getGeometryByWkt(veri);
+      // this._options="";
+    });
   }
+  getGeometryByWkt(veri){}
+
   ngOnInit(): void {
     this.map = new Map({
       target: 'map',
@@ -324,57 +325,64 @@ export class MapComponent extends BaseComponent implements OnInit {
         zoom: 6.8,
       }),
     });
+    this.addLayer()//haritaya bir layer eklendi.
   }
+  addLayer(){
+    this.vectorLayer = new VectorLayer({
+      source: new VectorSource(),
+      // style: new Style({
+      //   stroke: new Stroke({
+      //     color: '#ffcc33',
+      //     width: 2,
+      //   }),
+      //   fill: new Fill({
+      //     color: 'rgba(255, 255, 255, 0.2)',
+      //   }),
+      // }),
+          style: {
+        'fill-color': 'rgba(255, 255, 255, 0.2)',
+        'stroke-color': '#ffcc33',
+        'stroke-width': 2,
+        'circle-radius': 7,
+        'circle-fill-color': '#ffcc33',
+      },
+      className:"vecLay"
+    });
+    this.map.addLayer(this.vectorLayer)
+  }
+
   clearLayer() {
-    console.log(this.map.getLayers().item(0).getSourceState());
+    this.vectorLayer.getSource().clear()
   }
   addFeature(value: string) {
     let that=this;
     this.map.getInteractions().clear()
-    this.clearLayer();
-    this.generalDataService.getFeatureType(value);
-    // this.map.addInteraction()
-    const vectorLayer = new VectorLayer({
-      source: new VectorSource(),
-      style: new Style({
-        stroke: new Stroke({
-          color: '#ffcc33',
-          width: 2,
-        }),
-        fill: new Fill({
-          color: 'rgba(255, 255, 255, 0.2)',
-        }),
-      }),
-      className:"vecLay"
-    });
-    this.map.addLayer(vectorLayer);
+    this.generalDataService.getFeatureType(value);//service deki feature tipini guncellestiriyorum.
     const drawInteraction = new Draw({
-      type: this.generalDataService._featureType, // Çizilebilecek şekil türünü (Point, LineString, Polygon) seçin.
+      type: this.generalDataService._featureType, // Çizilebilecek şekil türünü (Point, LineString, Polygon) seciyorum
     });
-    that.map.removeInteraction(drawInteraction)
-    this.map.addInteraction(drawInteraction);
-    this.map.on('click', (event) => {
-      console.log();
-
-      const coordinateLong = event.coordinate[0];
-      console.log(coordinateLong);
-      const coordinateLat = event.coordinate[1];
-      console.log(coordinateLat);
-    });
-    drawInteraction.on('drawend', function (event) {
-      var feature = event.feature;
-      console.log(feature);
-      var geometry = feature.getGeometry();
-    vectorLayer.getSource().addFeature(feature);
+    // that.map.removeInteraction(drawInteraction)
+    this.map.addInteraction(drawInteraction);//interaction i map e ekliyorum.
     // vectorLayer.getSource().clear()
-      console.log(geometry.getType());
-      console.log(geometry);
-      // event.feature.dispose()
-      // that.map.getInteractions().clear()
-      const daataa = {
+    this.map.on('click', (event) => {//her click edildiginde 
+      const coordinateLong = event.coordinate[0];
+      const coordinateLat = event.coordinate[1];
+
+    });
+    drawInteraction.on('drawend', function (event) {//cizim bittiginde 
+    var feature = event.feature;
+    const _type:FeatureType = event.feature.getGeometry().getType() as FeatureType
+    that.vectorLayer.getSource().addFeature(feature);
+      var geometry = feature.getGeometry() as any
+      const data:IGeoLocation = {
         type: geometry.getType(),
-        // coordinates: geometry.getCoordinates(),
+        coordinates:geometry.getCoordinates()
       };
+      console.log(data.coordinates+"--------------");
+      
+      that.generalDataService.geometryToWkt(feature);//service class ında bir property ye wkt verisi aktarıldı.
+      that.generalDataService.setLocation(data);
+      //Modal acıyorum.
     });
   }
 }

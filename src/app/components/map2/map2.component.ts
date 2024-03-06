@@ -193,27 +193,14 @@ export class Map2Component extends BaseComponent implements OnInit{
     });
     return draw
   }
-
-
-
-
-
-  
   createModify(source):Modify{
     var modify = new Modify({source: source});
     return modify;
   }
-
-
-
-
-
   disposeMap(map:Map){
     map.dispose();
     this.mapİsActive=false;
   }
-
-
   openModal() {
     this.modalComponent.openModal();
   }
