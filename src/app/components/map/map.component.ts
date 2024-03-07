@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, OnInit, Type, numberAttribute } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  Type,
+  numberAttribute,
+} from '@angular/core';
 import Map from 'ol/Map';
 import { Draw, Modify, Snap } from 'ol/interaction';
 import TileLayer from 'ol/layer/Tile';
@@ -8,16 +14,18 @@ import OSM from 'ol/source/OSM';
 import VectorSource from 'ol/source/Vector';
 import { MyModalComponent } from '../my-modal/my-modal.component';
 import { LocDataService } from 'src/app/services/loc-data.service';
-import {  Circle, Geometry, LineString, Point, Polygon } from 'ol/geom';
+import { Circle, Geometry, LineString, Point, Polygon } from 'ol/geom';
 import { BaseComponent } from 'src/app/common/base/base.component';
 import { NgxSpinnerService } from 'ngx-spinner';
 import { GeneralDataService } from 'src/app/services/general-data.service';
 import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
-import { View } from 'ol';
+import { Collection, View } from 'ol';
 import { LocalizedString } from '@angular/compiler';
 import { IGeoLocation } from 'src/app/models/geo-location';
+import Layer from 'ol/layer/Layer';
+import BaseLayer from 'ol/layer/Base';
 @Component({
   selector: 'app-map',
   templateUrl: './map.component.html',
@@ -32,7 +40,6 @@ export class MapComponent extends BaseComponent implements OnInit {
   //     this.locDataService.veriOlusturulduSubject.subscribe((veri)=>{
   //       console.log("veri geldi");
   //       this.getGeometryBywkt(veri);----------------------------------------------------------------------------------------------------------------------------
-  //       this._options="";
 
   //     })
 
@@ -40,7 +47,6 @@ export class MapComponent extends BaseComponent implements OnInit {
 
   // data:any=null;
   // data2:any=null;
-  // _options: string = 'Point';
   // _type: Type;
   // mapİsActive:boolean=false;
   // map:Map;
@@ -52,11 +58,9 @@ export class MapComponent extends BaseComponent implements OnInit {
   //     this.disposeMap(this._featureMap)
   //   }
   //   for (const opt in Type) {
-  //     if(opt!=this._options){
   //       //bir değisiklik yapıldıysa
   //       this.mapİsActive=true;
   //       this.disposeMap(this.map);
-  //       this.getMap(this._options as Type);
   //       this.data=null;
   //       this.locDataService.data=null;
   //       this.locDataService.data2=null;
@@ -296,23 +300,24 @@ export class MapComponent extends BaseComponent implements OnInit {
    *
    */
   map: Map;
-  vectorLayer:any;
+  vectorLayer: any;
   options = '';
   constructor(
     ngxSpinner: NgxSpinnerService,
     public generalDataService: GeneralDataService,
-    public mymodal:MyModalComponent,
-    public locDataService:LocDataService
+    public mymodal: MyModalComponent,
+    public locDataService: LocDataService
   ) {
     super(ngxSpinner);
-    this.locDataService.veriOlusturulduSubject.subscribe((veri)=>{
+    this.locDataService.veriOlusturulduSubject.subscribe((veri) => {
       this.getGeometryByWkt(veri);
-      // this._options="";
+      this.options="";
     });
   }
-  getGeometryByWkt(veri){}
+  getGeometryByWkt(veri) {}
 
   ngOnInit(): void {
+    // this.generalDataService.options="default";
     this.map = new Map({
       target: 'map',
       layers: [
@@ -325,65 +330,99 @@ export class MapComponent extends BaseComponent implements OnInit {
         zoom: 6.8,
       }),
     });
-    this.addLayer()//haritaya bir layer eklendi.
+    this.addLayer(); //haritaya bir layer eklendi.
+    // this.locDataService.veriOlusturulduSubject.subscribe((veri) => {
+    //   console.log('veri geldi');
+    //   this.removeFeature();
+    // });
+    this.generalDataService.veriOlusturulduSubject.subscribe({
+      next:()=>{
+      this.clearFeature();//fetaure ların silinecegi fonskiyon burada tanımlandı.
+      this.clearInteraction();
+      // this.generalDataService.options="default"
+      
+      },
+      error:()=>{
+        alert("Veri Gelmedi.");
+        this.clearFeature();//fetaure ların silinecegi fonskiyon burada tanımlandı.
+        this.clearInteraction();
+        // this.generalDataService.options="default"
+      }
+    });
+    this.generalDataService.closedModal.subscribe({
+      next:()=>{
+      this.clearInteraction();
+      this.clearFeature();
+      // this.generalDataService.options="default"
+      },
+      error:()=>{
+        alert("Veri Gelmedi.");
+        this.clearInteraction();
+        this.clearFeature();
+      // this.generalDataService.options="default"
+
+      }
+    });
   }
-  addLayer(){
+  addLayer() {
     this.vectorLayer = new VectorLayer({
       source: new VectorSource(),
-      // style: new Style({
-      //   stroke: new Stroke({
-      //     color: '#ffcc33',
-      //     width: 2,
-      //   }),
-      //   fill: new Fill({
-      //     color: 'rgba(255, 255, 255, 0.2)',
-      //   }),
-      // }),
-          style: {
+      style: {
         'fill-color': 'rgba(255, 255, 255, 0.2)',
         'stroke-color': '#ffcc33',
         'stroke-width': 2,
         'circle-radius': 7,
         'circle-fill-color': '#ffcc33',
       },
-      className:"vecLay"
+      className: 'vecLay',
     });
-    this.map.addLayer(this.vectorLayer)
+    this.map.addLayer(this.vectorLayer);
   }
 
-  clearLayer() {
-    this.vectorLayer.getSource().clear()
-  }
   addFeature(value: string) {
-    let that=this;
-    this.map.getInteractions().clear()
-    this.generalDataService.getFeatureType(value);//service deki feature tipini guncellestiriyorum.
+    let that = this;
+    this.generalDataService.getFeatureType(value); //service deki feature tipini guncellestiriyorum.
     const drawInteraction = new Draw({
       type: this.generalDataService._featureType, // Çizilebilecek şekil türünü (Point, LineString, Polygon) seciyorum
     });
     // that.map.removeInteraction(drawInteraction)
-    this.map.addInteraction(drawInteraction);//interaction i map e ekliyorum.
+    this.map.addInteraction(drawInteraction); //interaction i map e ekliyorum.
     // vectorLayer.getSource().clear()
-    this.map.on('click', (event) => {//her click edildiginde 
+    this.map.on('click', (event) => {
+      //her click edildiginde
       const coordinateLong = event.coordinate[0];
       const coordinateLat = event.coordinate[1];
+    });
 
-    });
-    drawInteraction.on('drawend', function (event) {//cizim bittiginde 
-    var feature = event.feature;
-    const _type:FeatureType = event.feature.getGeometry().getType() as FeatureType
-    that.vectorLayer.getSource().addFeature(feature);
-      var geometry = feature.getGeometry() as any
-      const data:IGeoLocation = {
+    drawInteraction.on('drawend', function (event) {
+      that.generalDataService.setLocation(null);
+      that.generalDataService._wkt=null;
+      //cizim bittiginde
+      that.clearFeature()
+      var feature = event.feature;
+      const _type: FeatureType = event.feature
+        .getGeometry()
+        .getType() as FeatureType;
+      if(feature){
+        that.generalDataService.createdFeature.next("Feature Olusturuldu.");
+      }
+      that.vectorLayer.getSource().addFeature(feature);
+      var geometry = feature.getGeometry() as any;
+      const data: IGeoLocation = {
         type: geometry.getType(),
-        coordinates:geometry.getCoordinates()
+        coordinates: geometry.getCoordinates(),
       };
-      console.log(data.coordinates+"--------------");
-      
-      that.generalDataService.geometryToWkt(feature);//service class ında bir property ye wkt verisi aktarıldı.
+      that.generalDataService.geometryToWkt(feature); //service class ında bir property ye wkt verisi aktarıldı.
       that.generalDataService.setLocation(data);
-      //Modal acıyorum.
+      // Burada ilgili service yapısına datalar gonderildigi anda ilgili coordinates modalı acılır.
+      
     });
+  }
+  clearFeature() {
+    this.vectorLayer.getSource().clear();//Burada source icinde ki feature lar temizlendi.
+  }
+  clearInteraction(){
+    this.map.getInteractions().clear();
   }
 }
 export enum FeatureType {

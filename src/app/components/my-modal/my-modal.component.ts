@@ -1,4 +1,4 @@
-import { Component, ElementRef, Injectable, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Injectable, OnInit, ViewChild, booleanAttribute } from '@angular/core';
 import { NgxSpinnerService } from 'ngx-spinner';
 import { BaseComponent } from 'src/app/common/base/base.component';
 import { GeoLocation, IGeoLocation } from 'src/app/models/geo-location';
@@ -32,14 +32,20 @@ export class MyModalComponent extends BaseComponent implements OnInit {
     super(spinner)
    }
   ngOnInit(): void {
-    console.log("---------------");
     // this.data=this.locDataService.data;
     this.data=this.generalDataService.location;
     this.wkt=this.generalDataService._wkt;
-    if(this.generalDataService.location){
-      console.log("--------------------");
+    var isModalActive=this.generalDataService.isModalActive
+    if(this.generalDataService.createdFeature){
       this.openModal();
     }
+    this.generalDataService.createdFeature.subscribe({
+      next:()=>{
+        this.openModal();
+      },
+      error:()=>{
+      }
+    })
   }
   openModal() {
     const modelDiv=document.getElementById("myModal")
@@ -48,49 +54,43 @@ export class MyModalComponent extends BaseComponent implements OnInit {
     }
   }
   closeModal() {
-    const modelDiv=document.getElementById("myModal")
+    const modelDiv=document?.getElementById("myModal")
     if(modelDiv!=null)
       modelDiv.style.display="none"
       this.generalDataService.location=null;
       this.locDataService.data2=null;
+      this.generalDataService.isModalActive=false;
+      this.generalDataService.closedModal.next("Modal Kapatıldı.")
     }
-
     save(name:string){
       this.showSpinner();
       this.locationAndUser.coordinates=this.data.coordinates
-      // console.log(this.data.coordinates);
       this.locationAndUser.type=this.generalDataService.location.type
       this.locationAndUser.name=name
-      // console.log({name:this.locAndUser.name,coordinates:this.locAndUser.coordinates,type:this.locAndUser.type});
-      // console.log(this.locationAndUser);
-
+      this.locAndUsers.type=this.generalDataService.location.type
       this.locAndUsers.name=name;
       this.locAndUsers.wkt=this.generalDataService._wkt;
-
-      console.log(this.locAndUsers);
-      
-
-
-      // this.httpClient.post<LocationAndUsers>({controller:"maps"},this.locationAndUser).subscribe({
-      // this.httpClient.post<LocationAndUsers>({controller:"maps"},{Name:this.locationAndUser.Name,Type:this.locationAndUser.Type,Coordinates:this.locationAndUser.Coordinates}).subscribe({
     this.httpClient.post<LocAndUsers>({controller:"maps"},this.locAndUsers).subscribe({
       next:(data)=>{
         this.hideSpinner()
         alert("Veri Kaydedilmiştir.");
         this.closeModal();
+        this.generalDataService.veriOlusturulduSubject.next("Veri Kaydedildi.")
+        this.generalDataService.location=null;
+      // this.generalDataService.options="default"
+
+
       }, 
       error:(err)=>{
         this.hideSpinner();
         alert("Veri Eklenirken bir hata oluştu");
+        this.closeModal()
+        this.generalDataService.veriOlusturulduSubject.next("Veri Kaydedilmedi.")
+        this.generalDataService.location=null;
+      this.generalDataService.isModalActive=false;
+      // this.generalDataService.options="default"
+
       }
     })
-    // this.httpClient.get<any>({controller:"maps"}).subscribe({
-    //   next:(data)=>{
-    //     this.hideSpinner()
-    //   },
-    //   error:(err)=>{
-    //     this.hideSpinner();
-    //   }
-    // })
     }
 }

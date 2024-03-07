@@ -31,17 +31,6 @@ export class LocDataService {
       dataProjection: 'EPSG:4326',
       featureProjection: 'EPSG:3857'
   });
-    var geometry = feature.getGeometry() as Geometry;
-    // console.log(geometry)
-    // console.log(geometry.getCoordinates())
-    //  const map = new Map({
-    //   layers: [raster, vector],
-    //   target: 'map', // Harita bileşeninin ID'si
-    //   view: new View({
-    //     center: fromLonLat([34.9998,39.42152]),
-    //     zoom: 6.8,
-    //   }),
-    // });
   }
 
 }

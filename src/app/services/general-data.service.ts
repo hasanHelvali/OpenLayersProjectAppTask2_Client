@@ -2,16 +2,31 @@ import { Injectable } from '@angular/core';
 import { FeatureType } from '../components/map/map.component';
 import WKT from 'ol/format/WKT';
 import { IGeoLocation } from '../models/geo-location';
+import { Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GeneralDataService {
+  public veriOlusturulduSubject = new Subject<any>()
+  public closedModal = new Subject<any>()
+  public createdFeature = new Subject<any>()
+  // public modalAc = new Subject<any>()
   _featureType: FeatureType;
-  
+  isModalActive:boolean=false;;
   location:IGeoLocation;
-
+  isOptionActive:boolean=false;
   public _wkt:string
+
+
+  options = [
+    // { value: 'default', text: '--Seçiniz--' },
+    { value: 'Point', text: 'Point' },
+    { value: 'LineString', text: 'LineString' },
+    { value: 'Polygon', text: 'Polygon' },
+    { value: 'Circle', text: 'Circle' },
+  ];
+  
   getFeatureType(value: string) {
     for (const _type in FeatureType) {
       if (_type == value) {
@@ -30,20 +45,7 @@ export class GeneralDataService {
   }
 
   setLocation(data:IGeoLocation){
-    
-    // this.location as Geolocation;
-    // _data as Geolocation
-    // this.location.type=_data.type
-    // console.log(this.location.type);
-    // console.log(_data);
-    // this.location=_data;
-    // _data.coordinates.forEach(element => {
-    //   this.location.coordinates.push(element)
-    // });
-    // this.location.type=_type
-    // this.location.coordinates=_data
     this.location=data;
-    console.log(this.location);
-    
+    this.isModalActive=true;
   }
 }
