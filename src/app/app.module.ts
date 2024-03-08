@@ -10,6 +10,8 @@ import { MyModalComponent } from './components/my-modal/my-modal.component';
 import { BaseComponent } from './common/base/base.component';
 import { NgxSpinnerModule } from 'ngx-spinner';
 import { GeometryListModalComponent } from './components/geometry-list-modal/geometry-list-modal.component';
+import { MatDialogModule} from '@angular/material/dialog';
+import {MatButtonModule} from '@angular/material/button';
 @NgModule({
   declarations: [
     AppComponent,
@@ -24,6 +26,9 @@ import { GeometryListModalComponent } from './components/geometry-list-modal/geo
     HttpClientModule,
     NgxSpinnerModule,
     BrowserAnimationsModule,
+    MatDialogModule,
+    MatButtonModule,
+
   ],
   providers: [{provide:"baseUrl",useValue:"https://localhost:7295/api"},MyModalComponent,GeometryListModalComponent],
   bootstrap: [AppComponent]

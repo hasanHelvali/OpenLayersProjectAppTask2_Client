@@ -2,23 +2,32 @@ import { Injectable } from '@angular/core';
 import { FeatureType } from '../components/map/map.component';
 import WKT from 'ol/format/WKT';
 import { IGeoLocation } from '../models/geo-location';
-import { Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
+import { Observable } from 'rxjs';
+import { LocAndUsers } from '../models/locAndUsers';
+import { CustomHttpClient } from './customHttpClient.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GeneralDataService {
+  /**
+   *
+   */
+  constructor(private httpCLientService:CustomHttpClient) {
+    
+  }
   public veriOlusturulduSubject = new Subject<any>()
   public closedModal = new Subject<any>()
   public createdFeature = new Subject<any>()
+  public selectedOptions = new Subject<any>()
+  public listData = new Subject<LocAndUsers[]>()
   // public modalAc = new Subject<any>()
   _featureType: FeatureType;
   isModalActive:boolean=false;;
   location:IGeoLocation;
-  isOptionActive:boolean=false;
   public _wkt:string
-
-
+  locAndUsersList:LocAndUsers[];
   options = [
     // { value: 'default', text: '--Seçiniz--' },
     { value: 'Point', text: 'Point' },
@@ -47,5 +56,18 @@ export class GeneralDataService {
   setLocation(data:IGeoLocation){
     this.location=data;
     this.isModalActive=true;
+  }
+
+  // setOptions(variable:boolean){
+  // }
+  getGeometryListModal(){
+    this.httpCLientService.get<LocAndUsers>({controller:"maps"}).subscribe({
+      next:(data:LocAndUsers[])=>{
+        this.listData.next(data);
+      },
+      error:(err)=>{
+        // alert()
+      }
+    });
   }
 }

@@ -26,6 +26,10 @@ import { LocalizedString } from '@angular/compiler';
 import { IGeoLocation } from 'src/app/models/geo-location';
 import Layer from 'ol/layer/Layer';
 import BaseLayer from 'ol/layer/Base';
+import { CustomHttpClient } from 'src/app/services/customHttpClient.service';
+import { LocAndUsers } from 'src/app/models/locAndUsers';
+import { GeometryListModalComponent } from '../geometry-list-modal/geometry-list-modal.component';
+import { MatDialog } from '@angular/material/dialog';
 @Component({
   selector: 'app-map',
   templateUrl: './map.component.html',
@@ -204,10 +208,6 @@ export class MapComponent extends BaseComponent implements OnInit {
   //   this.mapİsActive=false;
   // }
 
-  // openModal() {
-  //   this.modalComponent.openModal();
-  // }
-
   // (){
   //   this.showSpinner();
   //   this.httpCLient.get<LocAndUsers>({controller:"maps"}).subscribe({
@@ -241,32 +241,13 @@ export class MapComponent extends BaseComponent implements OnInit {
   //     dataProjection: 'EPSG:4326',
   //     featureProjection: 'EPSG:3857'
   // });
-  //   // const vectorSource = new VectorSource({
-  //   //   features: [feature],
-  //   // });
-  //   // // var vector=this.createVector(source);
-  //   // const vectorLayer = new VectorLayer({
-  //   //   source: vectorSource,
-  //   // });
-  //   // var extent=this.createExtent();
-  //   // this.map=this.createMap(raster,vectorLayer,extent);
 
   //   // this.map.addLayer(vectorLayer);
-
-  //   const raster = new TileLayer({
-  //     source: new OSM(),
-  //   });
 
   //   // const feature = format.readFeature(wkt, {
   //   //   dataProjection: 'EPSG:4326',
   //   //   featureProjection: 'EPSG:3857',
   //   // });
-
-  //   const vector = new VectorLayer({
-  //     source: new VectorSource({
-  //       features: [feature],
-  //     }),
-  //   });
 
   //   var geometry = feature.getGeometry() as Geometry;
   //   // console.log(geometry)
@@ -282,42 +263,28 @@ export class MapComponent extends BaseComponent implements OnInit {
   //     this._featureMap=this.featureMap(raster,vector);
   // }
 
-  // featureMap(raster,vector){
-  //   if(this._featureMap){
-  //     this._featureMap.dispose()
-  //   }
-  //   return new Map({
-  //     layers: [raster, vector],
-  //     target: 'map', // Harita bileşeninin ID'si
-  //     view: new View({
-  //       center: fromLonLat([34.9998,39.42152]),
-  //       zoom: 6.8,
-  //     }),
-  //   });
-  // }
   //#region
-  /**
-   *
-   */
+
   map: Map;
   vectorLayer: any;
-  options = '';
+  options = "";
+  isOptionActive:boolean=false;
+  locAndUsersList:LocAndUsers[];
   constructor(
     ngxSpinner: NgxSpinnerService,
     public generalDataService: GeneralDataService,
     public mymodal: MyModalComponent,
-    public locDataService: LocDataService
+    public locDataService: LocDataService,
+    private httpCLientService:CustomHttpClient,
+    private geometryListModal:GeometryListModalComponent,
+    public dialog: MatDialog
   ) {
     super(ngxSpinner);
-    this.locDataService.veriOlusturulduSubject.subscribe((veri) => {
-      this.getGeometryByWkt(veri);
-      this.options="";
-    });
+
   }
   getGeometryByWkt(veri) {}
 
   ngOnInit(): void {
-    // this.generalDataService.options="default";
     this.map = new Map({
       target: 'map',
       layers: [
@@ -339,29 +306,31 @@ export class MapComponent extends BaseComponent implements OnInit {
       next:()=>{
       this.clearFeature();//fetaure ların silinecegi fonskiyon burada tanımlandı.
       this.clearInteraction();
-      // this.generalDataService.options="default"
-      
+      // this.generalDataService.isOptionActive=false;
       },
       error:()=>{
         alert("Veri Gelmedi.");
         this.clearFeature();//fetaure ların silinecegi fonskiyon burada tanımlandı.
         this.clearInteraction();
-        // this.generalDataService.options="default"
       }
     });
     this.generalDataService.closedModal.subscribe({
       next:()=>{
       this.clearInteraction();
       this.clearFeature();
-      // this.generalDataService.options="default"
       },
       error:()=>{
         alert("Veri Gelmedi.");
         this.clearInteraction();
         this.clearFeature();
-      // this.generalDataService.options="default"
-
       }
+    });
+    this.generalDataService.selectedOptions.subscribe({
+      next:(data)=>{
+        this.options=data
+        },
+        error:()=>{
+        }
     });
   }
   addLayer() {
@@ -378,8 +347,9 @@ export class MapComponent extends BaseComponent implements OnInit {
     });
     this.map.addLayer(this.vectorLayer);
   }
-
   addFeature(value: string) {
+    this.options="none"
+    this.generalDataService.selectedOptions.next(value)
     let that = this;
     this.generalDataService.getFeatureType(value); //service deki feature tipini guncellestiriyorum.
     const drawInteraction = new Draw({
@@ -415,7 +385,7 @@ export class MapComponent extends BaseComponent implements OnInit {
       that.generalDataService.geometryToWkt(feature); //service class ında bir property ye wkt verisi aktarıldı.
       that.generalDataService.setLocation(data);
       // Burada ilgili service yapısına datalar gonderildigi anda ilgili coordinates modalı acılır.
-      
+
     });
   }
   clearFeature() {
@@ -423,6 +393,49 @@ export class MapComponent extends BaseComponent implements OnInit {
   }
   clearInteraction(){
     this.map.getInteractions().clear();
+  }
+
+  getGeometryListModal(){
+    this.geometryListModal.openModal()
+  }
+
+  // getList() {
+  //     //  const modalDiv=document.getElementById("liste")
+  //     //  if(modalDiv!=null){
+  //     //    modalDiv.style.display="block"
+  //     //  }
+  //     },
+  //     error:(err)=>{
+  //       // const modalDiv=document.getElementById("liste")
+  //       // if(modalDiv!=null){
+  //       //   modalDiv.style.display="block"
+  //       // }
+  //     }
+  //   });
+    // this.geometryListModal.getData();
+
+
+
+  openDilaog(){
+    this.showSpinner();
+    this.httpCLientService.get<LocAndUsers>({controller:"maps"}).subscribe({
+      next:(data:LocAndUsers[])=>{
+        this.generalDataService.listData.next(data);
+        
+        this.generalDataService.getGeometryListModal()//Modal Acılıyor.
+        this.hideSpinner()
+        const dialogRef = this.dialog.open(GeometryListModalComponent,{
+        });
+        dialogRef.afterClosed().subscribe(result => {
+          console.log(`Dialog result: ${result}`);
+        });
+      },
+      error:(err)=>{
+        this.hideSpinner()
+        //Yapılacak Baska İşlemler de var.
+      }
+    });
+
   }
 }
 export enum FeatureType {

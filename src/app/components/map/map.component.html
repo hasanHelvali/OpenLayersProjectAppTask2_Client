@@ -4,15 +4,17 @@
       <!-- <label for="type">Geometry type &nbsp;</label> -->
       <div class="">
         <select id="type" class="form-select  "[(ngModel)]="options" ngmodel [ngModelOptions]="{standalone: true}" #selectBox (change)="addFeature(selectBox.value)" >
-           <option value="">-- Seçiniz --</option>
+          <option value="">-- Seçiniz --</option>
           <option value="Point">Point</option>
           <option value="LineString">LineString</option>
           <option value="Polygon">Polygon</option>
           <option value="Circle">Circle</option>
+          <option value="Circle">{{options}}</option>
         </select>
       </div>
     </form>
     <script type="module" src="main.js"></script>
   </body>
-  <!-- <button id="typeButton" class="btn btn-light" (click)="getGeometryModal()">Bütün Kayıtları Getir</button> -->
-
+  <!-- <button id="typeButton" class="btn btn-light" >Bütün Kayıtları Getir</button> -->
+  <!-- <button id="typeButton" class="btn btn-light" (click)="getGeometryListModal()">Bütün Kayıtları Getir</button> -->
+  <button id="typeButton" mat-button (click)="openDilaog()">Open dialog</button>

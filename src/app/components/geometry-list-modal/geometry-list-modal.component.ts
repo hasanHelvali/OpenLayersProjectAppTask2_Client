@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Inject, Input, OnInit, ViewChild } from '@angular/core';
 import { NgxSpinnerService } from 'ngx-spinner';
 import { BaseComponent } from 'src/app/common/base/base.component';
 import { LocAndUsers } from 'src/app/models/locAndUsers';
@@ -6,6 +6,8 @@ import { CustomHttpClient } from 'src/app/services/customHttpClient.service';
 import { LocDataService } from 'src/app/services/loc-data.service';
 
 import * as $ from 'jquery';
+import { GeneralDataService } from 'src/app/services/general-data.service';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-geometry-list-modal',
@@ -13,22 +15,73 @@ import * as $ from 'jquery';
   styleUrls: ['./geometry-list-modal.component.css']
 })
 export class GeometryListModalComponent extends BaseComponent implements OnInit{
+  
 // listLocAndUsers:LocAndUsers[]=[]
 isModalActive:boolean=false;
-  constructor(private httpClient:CustomHttpClient,public locDataService:LocDataService,spinner:NgxSpinnerService) {
+  constructor(private httpClient:CustomHttpClient,public generalDataService:GeneralDataService,spinner:NgxSpinnerService, private cdr:ChangeDetectorRef,
+    // private dialogRef: MatDialogRef<GeometryListModalComponent>,
+    // @Inject(MAT_DIALOG_DATA) private data: LocAndUsers[]
+    ) {
     super(spinner)
   }
   @ViewChild('liste') listModal: ElementRef;
+  // @Input() listLocAndUsers:LocAndUsers[]; // Parent component'ten gelen veriyi almak için
   isRequest:boolean=false;;
+  listLocAndUsers:LocAndUsers[]=[]
   ngOnInit(): void {
+    this.generalDataService.listData.subscribe({
+      next:(data:LocAndUsers[])=>{
+        this.listLocAndUsers=data;
+      },
+      error:(err)=>{
+        alert("Veriler Getirilirken Bir Hata Oluştu.")
+      }
+    })
+    // this.showSpinner();
+    // this.generalDataService.getGeometryListModal().subscribe({
+    //   next:(data)=>{
+    //     this.listLocAndUsers=data as LocAndUsers[];
+    //     console.log(data);
+    //     console.log(this.listLocAndUsers);
+    //    this.hideSpinner();       
+    //   }
+    // });
+  }
 
+  getData(){
+    this.showSpinner();
+    this.generalDataService.listData.subscribe({
+      next:(data)=>{
+        this.listLocAndUsers=data;
+        // this.listLocAndUsers=data as LocAndUsers[];
+        // console.log(data);
+        // console.log(this.listLocAndUsers);
+       this.hideSpinner();
+      //  const modalDiv=document.getElementById("liste")
+      //  if(modalDiv!=null){
+      //    modalDiv.style.display="block"
+      //  }
+      },
+      error:(err)=>{
+        alert("Kayıtlar Getirilirken Bir Hata Oluştu.");
+        this.hideSpinner();
+        // const modalDiv=document.getElementById("liste")
+        // if(modalDiv!=null){
+        //   modalDiv.style.display="block"
+        // }
+      }
+    });
   }
   openModal()
   {
-    const modalDiv=document.getElementById("liste")
-    if(modalDiv!=null){
-      modalDiv.style.display="block"
-    }
+     this.getData();
+    // const modalDiv=document.getElementById("liste")
+    // if(modalDiv!=null){
+    //   modalDiv.style.display="block"
+    // }
+  }
+  setBlock(){
+    
   }
 
   closeModal() {
@@ -59,7 +112,9 @@ isModalActive:boolean=false;
     }
 
     getLocation(wkt){
-      this.closeModal();
-      this.locDataService.veriOlusturulduSubject.next(wkt)
+    //   this.closeModal();
+    //   this.locDataService.veriOlusturulduSubject.next(wkt)
     }
+
+   
 }

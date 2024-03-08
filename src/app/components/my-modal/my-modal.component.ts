@@ -61,6 +61,7 @@ export class MyModalComponent extends BaseComponent implements OnInit {
       this.locDataService.data2=null;
       this.generalDataService.isModalActive=false;
       this.generalDataService.closedModal.next("Modal Kapatıldı.")
+      this.generalDataService.selectedOptions.next("");
     }
     save(name:string){
       this.showSpinner();
@@ -70,8 +71,8 @@ export class MyModalComponent extends BaseComponent implements OnInit {
       this.locAndUsers.type=this.generalDataService.location.type
       this.locAndUsers.name=name;
       this.locAndUsers.wkt=this.generalDataService._wkt;
-    this.httpClient.post<LocAndUsers>({controller:"maps"},this.locAndUsers).subscribe({
-      next:(data)=>{
+      this.httpClient.post<LocAndUsers>({controller:"maps"},this.locAndUsers).subscribe({
+    next:(data)=>{
         this.hideSpinner()
         alert("Veri Kaydedilmiştir.");
         this.closeModal();
