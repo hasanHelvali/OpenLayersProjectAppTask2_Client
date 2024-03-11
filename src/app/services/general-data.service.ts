@@ -22,6 +22,8 @@ export class GeneralDataService {
   public createdFeature = new Subject<any>()
   public selectedOptions = new Subject<any>()
   public listData = new Subject<LocAndUsers[]>()
+  public mapFeature = new Subject<any>()
+
   // public modalAc = new Subject<any>()
   _featureType: FeatureType;
   isModalActive:boolean=false;;

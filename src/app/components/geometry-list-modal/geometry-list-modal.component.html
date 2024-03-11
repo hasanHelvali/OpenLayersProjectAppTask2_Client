@@ -91,19 +91,38 @@
     </thead>
     <tbody class="text-center">
       <tr id="dataRow{{item.id}}" class="trRow" *ngFor="let item of listLocAndUsers">
-        {{listLocAndUsers[0].id}}asada
         <th class="border" scope="row">{{item.id}}</th>
         <td class="border">{{ item.name }}</td>
         <td class="border" >{{ item.type }}</td>
-        <td class="border"><span><i class="bi bi-pin-map-fill text-warning" (click)="getLocation(item.wkt)" ></i></span></td>
+        <td class="border"><span><i class="bi bi-pin-map-fill text-warning" (click)="getLocation(item.wkt)" [mat-dialog-close]="true" ></i></span></td>
         <td><span><i class="bi bi-trash text-danger" (click)="deleteLocAndUser(item.id)"></i></span></td>
       </tr>
     </tbody>
   </table>
+  <!-- <mat-table [dataSource]="dataSource">
+    <thead>
+      <tr mat-header-row>
+        <th mat-header-cell >ID</th>
+        <th mat-header-cell >Name</th>
+        <th mat-header-cell >WKT</th>
+        <th mat-header-cell >Göster</th>
+        <th mat-header-cell >Sil</th>
+      </tr>
+    </thead>
+    <tbody >
+      <tr mat-row *ngFor="let item of dataSource">
+        <td mat-cell>{{ item.id }}</td>
+        <td mat-cell>{{ item.name }}</td>
+        <td mat-cell>{{ item.type }}</td>
+        <td mat-cell></td>
+        <td mat-cell></td>
+      </tr>
+    </tbody>
+  </mat-table> -->
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Cancel</button>
-  <button mat-button [mat-dialog-close]="true" cdkFocusInitial>Install</button>
+  <button mat-button mat-dialog-close>Çık</button>
+  <!-- <button mat-button [mat-dialog-close]="true" cdkFocusInitial>Install</button> -->
 </mat-dialog-actions>
 

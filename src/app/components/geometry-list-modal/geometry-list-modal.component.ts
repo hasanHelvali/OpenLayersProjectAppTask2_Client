@@ -8,6 +8,7 @@ import { LocDataService } from 'src/app/services/loc-data.service';
 import * as $ from 'jquery';
 import { GeneralDataService } from 'src/app/services/general-data.service';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MatTableDataSource } from '@angular/material/table';
 
 @Component({
   selector: 'app-geometry-list-modal',
@@ -18,6 +19,7 @@ export class GeometryListModalComponent extends BaseComponent implements OnInit{
   
 // listLocAndUsers:LocAndUsers[]=[]
 isModalActive:boolean=false;
+  dataSource: MatTableDataSource<any>|any;
   constructor(private httpClient:CustomHttpClient,public generalDataService:GeneralDataService,spinner:NgxSpinnerService, private cdr:ChangeDetectorRef,
     // private dialogRef: MatDialogRef<GeometryListModalComponent>,
     // @Inject(MAT_DIALOG_DATA) private data: LocAndUsers[]
@@ -32,20 +34,12 @@ isModalActive:boolean=false;
     this.generalDataService.listData.subscribe({
       next:(data:LocAndUsers[])=>{
         this.listLocAndUsers=data;
+        
       },
       error:(err)=>{
         alert("Veriler Getirilirken Bir Hata Oluştu.")
       }
     })
-    // this.showSpinner();
-    // this.generalDataService.getGeometryListModal().subscribe({
-    //   next:(data)=>{
-    //     this.listLocAndUsers=data as LocAndUsers[];
-    //     console.log(data);
-    //     console.log(this.listLocAndUsers);
-    //    this.hideSpinner();       
-    //   }
-    // });
   }
 
   getData(){
@@ -53,28 +47,18 @@ isModalActive:boolean=false;
     this.generalDataService.listData.subscribe({
       next:(data)=>{
         this.listLocAndUsers=data;
-        // this.listLocAndUsers=data as LocAndUsers[];
-        // console.log(data);
-        // console.log(this.listLocAndUsers);
+        this.dataSource=data;
        this.hideSpinner();
-      //  const modalDiv=document.getElementById("liste")
-      //  if(modalDiv!=null){
-      //    modalDiv.style.display="block"
-      //  }
       },
       error:(err)=>{
         alert("Kayıtlar Getirilirken Bir Hata Oluştu.");
         this.hideSpinner();
-        // const modalDiv=document.getElementById("liste")
-        // if(modalDiv!=null){
-        //   modalDiv.style.display="block"
-        // }
       }
     });
   }
   openModal()
   {
-     this.getData();
+    //  this.getData();
     // const modalDiv=document.getElementById("liste")
     // if(modalDiv!=null){
     //   modalDiv.style.display="block"
@@ -112,8 +96,8 @@ isModalActive:boolean=false;
     }
 
     getLocation(wkt){
-    //   this.closeModal();
-    //   this.locDataService.veriOlusturulduSubject.next(wkt)
+      this.closeModal();
+        this.generalDataService.mapFeature.next(wkt);
     }
 
    

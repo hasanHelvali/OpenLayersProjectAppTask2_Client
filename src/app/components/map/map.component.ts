@@ -30,6 +30,9 @@ import { CustomHttpClient } from 'src/app/services/customHttpClient.service';
 import { LocAndUsers } from 'src/app/models/locAndUsers';
 import { GeometryListModalComponent } from '../geometry-list-modal/geometry-list-modal.component';
 import { MatDialog } from '@angular/material/dialog';
+import { format } from 'ol/coordinate';
+import WKT from 'ol/format/WKT';
+import VectorImageLayer from 'ol/layer/VectorImage';
 @Component({
   selector: 'app-map',
   templateUrl: './map.component.html',
@@ -282,7 +285,7 @@ export class MapComponent extends BaseComponent implements OnInit {
     super(ngxSpinner);
 
   }
-  getGeometryByWkt(veri) {}
+  // getGeometryByWkt(veri) {}
 
   ngOnInit(): void {
     this.map = new Map({
@@ -332,6 +335,18 @@ export class MapComponent extends BaseComponent implements OnInit {
         error:()=>{
         }
     });
+    this.generalDataService.mapFeature.subscribe({
+      next:(data)=>{
+        this.wktToMapFeature(data);
+        // this.clearInteraction();
+        // this.clearFeature();
+        },
+        error:()=>{
+          alert("Veri Gelmedi.");
+          this.clearInteraction();
+          this.clearFeature();
+        }
+    });
   }
   addLayer() {
     this.vectorLayer = new VectorLayer({
@@ -348,7 +363,8 @@ export class MapComponent extends BaseComponent implements OnInit {
     this.map.addLayer(this.vectorLayer);
   }
   addFeature(value: string) {
-    this.options="none"
+    this.vectorLayer.getSource().clear();
+    this.options=""
     this.generalDataService.selectedOptions.next(value)
     let that = this;
     this.generalDataService.getFeatureType(value); //service deki feature tipini guncellestiriyorum.
@@ -427,7 +443,7 @@ export class MapComponent extends BaseComponent implements OnInit {
         const dialogRef = this.dialog.open(GeometryListModalComponent,{
         });
         dialogRef.afterClosed().subscribe(result => {
-          console.log(`Dialog result: ${result}`);
+          // console.log(`Dialog result: ${result}`);
         });
       },
       error:(err)=>{
@@ -437,6 +453,25 @@ export class MapComponent extends BaseComponent implements OnInit {
     });
 
   }
+
+  wktToMapFeature(_wkt){
+    this.vectorLayer.getSource().clear();
+    // this.map.
+      //     var format = new WKT();
+  //     const _wkt = format.writeGeometry(feature.getGeometry(), {
+  //       dataProjection: 'EPSG:4326',
+  //       featureProjection: 'EPSG:3857'
+  //     });
+    var format=new WKT();
+    const feature = format.readFeature(_wkt,{
+      dataProjection:'EPSG:4326',
+      featureProjection: 'EPSG:3857'
+    })
+    console.log(feature);
+    const source =this.vectorLayer.getSource();
+    source.addFeature(feature);
+this.map.getView().fit(feature.getGeometry() as any,{padding:[40,40,40,40],duration:1000})    
+  }
 }
 export enum FeatureType {
   Circle = 'Circle',
@@ -444,3 +479,14 @@ export enum FeatureType {
   Point = 'Point',
   Polygon = 'Polygon',
 }
+// createMap(raster,vector,extent):Map{
+  //   var map = new Map({
+  //     layers: [raster, vector],
+  //     target: 'map',
+  //     view: new View({
+  //       center: fromLonLat([34.9998,39.42152]),
+  //       zoom: 6.8,
+  //       extent,
+  //     }),
+  //   });
+  //   return map;

@@ -10,7 +10,6 @@ import { Geometry } from 'ol/geom';
   providedIn: 'root'
 })
 export class LocDataService {
-  public veriOlusturulduSubject = new Subject<any>()
   data:GeoLocation
 
   data2:LocAndUsers
