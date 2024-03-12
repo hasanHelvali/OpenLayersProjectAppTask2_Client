@@ -9,6 +9,8 @@ import * as $ from 'jquery';
 import { GeneralDataService } from 'src/app/services/general-data.service';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatTableDataSource } from '@angular/material/table';
+import { GeoLocation, IGeoLocation } from 'src/app/models/geo-location';
+import { UpdateLocation } from 'src/app/models/updateLocation';
 
 @Component({
   selector: 'app-geometry-list-modal',
@@ -34,7 +36,6 @@ isModalActive:boolean=false;
     this.generalDataService.listData.subscribe({
       next:(data:LocAndUsers[])=>{
         this.listLocAndUsers=data;
-        
       },
       error:(err)=>{
         alert("Veriler Getirilirken Bir Hata Oluştu.")
@@ -95,9 +96,14 @@ isModalActive:boolean=false;
       })
     }
 
-    getLocation(wkt){
+    getLocation(id,name?,type?,wkt?){
       this.closeModal();
-        this.generalDataService.mapFeature.next(wkt);
+      var geoLoc=new UpdateLocation();
+      geoLoc.id=id;
+      geoLoc.name=name;
+      geoLoc.type=type;
+      geoLoc.wkt=wkt
+      this.generalDataService.mapFeature.next(geoLoc);
     }
 
    

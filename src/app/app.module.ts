@@ -13,12 +13,14 @@ import { GeometryListModalComponent } from './components/geometry-list-modal/geo
 import { MatDialogModule} from '@angular/material/dialog';
 import {MatButtonModule} from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
+import { UpdateModalComponent } from './components/update-modal/update-modal.component';
 @NgModule({
   declarations: [
     AppComponent,
     MapComponent,
     MyModalComponent,
     GeometryListModalComponent,
+    UpdateModalComponent,
   ],
   imports: [
     BrowserModule,
@@ -31,7 +33,7 @@ import { MatTableModule } from '@angular/material/table';
     MatButtonModule,
     MatTableModule
   ],
-  providers: [{provide:"baseUrl",useValue:"https://localhost:7295/api"},MyModalComponent,GeometryListModalComponent],
+  providers: [{provide:"baseUrl",useValue:"https://localhost:7295/api"},MyModalComponent,GeometryListModalComponent,UpdateModalComponent],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

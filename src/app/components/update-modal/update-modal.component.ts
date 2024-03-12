@@ -1,39 +1,27 @@
-import {
-  ChangeDetectorRef,
-  Component,
-  ElementRef,
-  Injectable,
-  OnInit,
-  ViewChild,
-  booleanAttribute,
-} from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { NgxSpinnerService } from 'ngx-spinner';
 import { BaseComponent } from 'src/app/common/base/base.component';
 import { GeoLocation, IGeoLocation } from 'src/app/models/geo-location';
 import { LocAndUsers } from 'src/app/models/locAndUsers';
 import { LocationAndUsers } from 'src/app/models/location-and-users';
+import { UpdateLocation } from 'src/app/models/updateLocation';
 import { CustomHttpClient } from 'src/app/services/customHttpClient.service';
 import { GeneralDataService } from 'src/app/services/general-data.service';
 import { LocDataService } from 'src/app/services/loc-data.service';
 
-declare var $: any;
-@Injectable({
-  providedIn: 'root',
-})
 @Component({
-  selector: 'app-my-modal',
-  templateUrl: './my-modal.component.html',
-  styleUrls: ['./my-modal.component.css'],
+  selector: 'app-update-modal',
+  templateUrl: './update-modal.component.html',
+  styleUrls: ['./update-modal.component.css']
 })
-export class MyModalComponent extends BaseComponent implements OnInit {
-  @ViewChild('myModal') myModal: ElementRef;
-
-  data: GeoLocation;
+export class UpdateModalComponent extends BaseComponent implements OnInit {
+  data: UpdateLocation=new UpdateLocation();
   data2: LocAndUsers;
   wkt: string;
   locationAndUser: LocationAndUsers = new LocationAndUsers();
   locAndUsers: LocAndUsers = new LocAndUsers();
   // modelDiv=document.getElementById("myModal")
+  isFeatureChanged=false;
 
   coordinatesAndType: IGeoLocation;
   constructor(
@@ -44,52 +32,47 @@ export class MyModalComponent extends BaseComponent implements OnInit {
     private readonly changeDetectorRef: ChangeDetectorRef
   ) {
     super(spinner);
+
   }
   ngOnInit(): void {
-    // this.data=this.locDataService.data;
-    this.data = this.generalDataService.location;
-    this.wkt = this.generalDataService._wkt;
-    var isModalActive = this.generalDataService.isModalActive;
-    this.changeDetectorRef.detectChanges();
-    if (this.generalDataService.createdFeature) {
-      this.openModal();
-    }
-    this.changeDetectorRef.detectChanges();
-    this.generalDataService.createdFeature.subscribe({
-      next: () => {
-        this.openModal();
-      },
-      error: () => {},
-    });
+    console.log("updateModal");
 
     this.generalDataService.featureUpdate.subscribe({
-      next: (data) => {
-        this.updateModal();
-      },
-      error: (err) => {},
+      next:(data)=>{
+        // this.wktToMapFeature(data);
+        // this.clearInteraction();
+        // this.clearFeature();
+        this.isFeatureChanged=data as boolean
+        this.changeDetectorRef.detectChanges()
+        },
+        error:()=>{
+          alert("Veri Gelmedi.");
+          // this.clearInteraction();
+          // this.clearFeature();
+        }
     });
-    this.changeDetectorRef.detectChanges();
+
+    this.generalDataService.featureUpdateGeneralData.subscribe({
+      next:(data)=>{
+        this.data=data as UpdateLocation;
+        console.log(this.data);
+
+      },
+      error:(err)=>{
+
+      }
+    })
   }
+
   openModal() {
-    const modelDiv = document.getElementById('myModal');
+    const modelDiv = document.getElementById('myUpdateModal');
     if (modelDiv != null) {
       modelDiv.style.display = 'block';
     }
   }
-  updateModal() {
-    // this.closeModal()
-    const modelDiv = document.getElementById('myModal');
-    console.log(modelDiv);
 
-    if (modelDiv != null) {
-      modelDiv.style.display = 'block';
-    }
-    console.log('------------------------------');
-
-    this.changeDetectorRef.detectChanges();
-  }
   closeModal() {
-    const modelDiv = document?.getElementById('myModal');
+    const modelDiv = document?.getElementById('myUpdateModal');
     if (modelDiv != null) modelDiv.style.display = 'none';
     this.generalDataService.location = null;
     this.locDataService.data2 = null;
@@ -97,38 +80,58 @@ export class MyModalComponent extends BaseComponent implements OnInit {
     this.generalDataService.closedModal.next('Modal Kapatıldı.');
     this.generalDataService.selectedOptions.next('');
   }
+
   save(name: string) {
     this.showSpinner();
     this.locationAndUser.coordinates = this.data.coordinates;
-    this.locationAndUser.type = this.generalDataService.location.type;
+    this.locationAndUser.type = this.data.type;
     this.locationAndUser.name = name;
-    this.locAndUsers.type = this.generalDataService.location.type;
-    this.locAndUsers.name = name;
-    this.locAndUsers.wkt = this.generalDataService._wkt;
+    this.locAndUsers.wkt = this.data.wkt;
+
+    var locData:LocAndUsers=new LocAndUsers();
+    locData.id=this.data.id;
+    locData.name=name;
+    locData.type=this.data.type;
+    locData.wkt=this.data.wkt;
+    console.log(locData);
+
     this.httpClient
-      .post<LocAndUsers>({ controller: 'maps' }, this.locAndUsers)
+      .put<LocAndUsers>({ controller: 'maps' }, locData)
       .subscribe({
         next: (data) => {
           this.hideSpinner();
           alert('Veri Kaydedilmiştir.');
           this.closeModal();
-          this.generalDataService.veriOlusturulduSubject.next(
-            'Veri Kaydedildi.'
-          );
-          this.generalDataService.location = null;
+          // this.generalDataService.veriOlusturulduSubject.next(
+          //   'Veri Kaydedildi.'
+          // );
+          // this.generalDataService.location
+          // this.generalDataService.featureUpdateGeneralData=null;
           // this.generalDataService.options="default"
+          // this.locationAndUser=null;
+          // this.locDataService.data=null;
+          this.data=null;
+          locData=null;
+          // this.generalDataService.featureUpdateGeneralData=null;
+          this.generalDataService.featureUpdate.next(false)
+
         },
         error: (err) => {
           this.hideSpinner();
-          alert('Veri Eklenirken bir hata oluştu');
+          alert(err);
+          console.log(err.message);
+
           this.closeModal();
-          this.generalDataService.veriOlusturulduSubject.next(
-            'Veri Kaydedilmedi.'
-          );
+          // this.generalDataService.veriOlusturulduSubject.next(
+          //   'Veri Kaydedilmedi.'
+          // );
+          this.generalDataService.featureUpdate.next(false)
+
           this.generalDataService.location = null;
           this.generalDataService.isModalActive = false;
           // this.generalDataService.options="default"
         },
       });
   }
+
 }

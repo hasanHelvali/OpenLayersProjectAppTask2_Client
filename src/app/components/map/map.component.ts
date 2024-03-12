@@ -1,5 +1,6 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   OnInit,
   Type,
@@ -21,7 +22,7 @@ import { GeneralDataService } from 'src/app/services/general-data.service';
 import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
-import { Collection, View } from 'ol';
+import { Collection, Observable, View } from 'ol';
 import { LocalizedString } from '@angular/compiler';
 import { IGeoLocation } from 'src/app/models/geo-location';
 import Layer from 'ol/layer/Layer';
@@ -33,6 +34,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { format } from 'ol/coordinate';
 import WKT from 'ol/format/WKT';
 import VectorImageLayer from 'ol/layer/VectorImage';
+import { UpdateModalComponent } from '../update-modal/update-modal.component';
+import { UpdateLocation } from 'src/app/models/updateLocation';
 @Component({
   selector: 'app-map',
   templateUrl: './map.component.html',
@@ -45,6 +48,8 @@ export class MapComponent extends BaseComponent implements OnInit {
   options = "";
   isOptionActive:boolean=false;
   locAndUsersList:LocAndUsers[];
+  snap:any;
+  isFeatureChanged=false;
   constructor(
     ngxSpinner: NgxSpinnerService,
     public generalDataService: GeneralDataService,
@@ -52,13 +57,16 @@ export class MapComponent extends BaseComponent implements OnInit {
     public locDataService: LocDataService,
     private httpCLientService:CustomHttpClient,
     private geometryListModal:GeometryListModalComponent,
-    public dialog: MatDialog
-  ) {
-    super(ngxSpinner);
-
-  }
-  // getGeometryByWkt(veri) {}
-
+    public dialog: MatDialog,
+    public updateModal:UpdateModalComponent,
+    private readonly changeDetectorRef: ChangeDetectorRef
+    ) {
+      super(ngxSpinner);
+      
+    }
+    // var draw, snap; 
+    // getGeometryByWkt(veri) {}
+    
   ngOnInit(): void {
     this.map = new Map({
       target: 'map',
@@ -108,7 +116,9 @@ export class MapComponent extends BaseComponent implements OnInit {
     });
     this.generalDataService.mapFeature.subscribe({
       next:(data)=>{
-        this.wktToMapFeature(data);
+        const _data=data as UpdateLocation;
+        console.log("data-"+data);
+        this.wktToMapFeature(_data);
         // this.clearInteraction();
         // this.clearFeature();
         },
@@ -117,6 +127,12 @@ export class MapComponent extends BaseComponent implements OnInit {
           this.clearInteraction();
           this.clearFeature();
         }
+    });
+    this.generalDataService.featureUpdate.subscribe({
+      next:(data)=>{
+        this.isFeatureChanged=data as boolean
+        this.changeDetectorRef.detectChanges()
+        },
     });
   }
   addLayer() {
@@ -155,7 +171,7 @@ export class MapComponent extends BaseComponent implements OnInit {
       that.generalDataService.setLocation(null);
       that.generalDataService._wkt=null;
       //cizim bittiginde
-      that.clearFeature()
+      that.clearFeature() 
       var feature = event.feature;
       const _type: FeatureType = event.feature
         .getGeometry()
@@ -172,7 +188,6 @@ export class MapComponent extends BaseComponent implements OnInit {
       that.generalDataService.geometryToWkt(feature); //service class ında bir property ye wkt verisi aktarıldı.
       that.generalDataService.setLocation(data);
       // Burada ilgili service yapısına datalar gonderildigi anda ilgili coordinates modalı acılır.
-
     });
   }
   clearFeature() {
@@ -205,22 +220,59 @@ export class MapComponent extends BaseComponent implements OnInit {
         //Yapılacak Baska İşlemler de var.
       }
     });
-
   }
 
-  wktToMapFeature(_wkt){
+  openChangeDialog(){
+    // this.mymodal.updateModal();
+    this.generalDataService.featureUpdate.next(true);
+    this.updateModal.openModal()
+  }
+
+  wktToMapFeature(_data:UpdateLocation){
     this.vectorLayer.getSource().clear();
     var format=new WKT();
-    const feature = format.readFeature(_wkt,{
+    const feature = format.readFeature(_data.wkt,{
       dataProjection:'EPSG:4326',
       featureProjection: 'EPSG:3857'
     })
     console.log(feature);
     const source =this.vectorLayer.getSource();
     source.addFeature(feature);
-this.map.getView().fit(feature.getGeometry() as any,{padding:[40,40,40,40],duration:1000})    
-  }
+    this.map.getView().fit(feature.getGeometry() as any,{padding:[40,40,40,40],duration:1000})    
+
+    const modify = new Modify({source: source});
+    this.map.addInteraction(modify);
+    this.snap = new Snap({source: source});
+    this.map.addInteraction(this.snap);
+    //Feature da degisiklik yapılmasına olanak saglayan yapılar bunlardır.
+
+    modify.on('modifystart', () => {
+      console.log("-------------");
+      this.isFeatureChanged=true;
+      this.changeDetectorRef.detectChanges()
+      // feature.modified = true; // Özelliği güncelleme
+    });
+    modify.on('modifyend', () => {
+      console.log("-------------");
+      this.generalDataService.featureUpdate.next(true);
+      // this.isFeatureChanged=true
+      var geometry = feature.getGeometry() as any;
+      const data: IGeoLocation = {
+        type: geometry.getType(),
+        coordinates: geometry.getCoordinates(),
+      };
+
+      this.generalDataService.updatedLocation=data;
+      _data.type=data.type;
+      _data.coordinates=data.coordinates;
+      //Elde edilen son geometri verisini wkt ye tekrardan cast etmem gerek
+      _data.wkt=this.generalDataService.updateGeometryToWkt(feature);
+      this.generalDataService.featureUpdateGeneralData.next(_data);
+
+      // Değişiklikler tamamlandı
+    });
 }
+  }
 export enum FeatureType {
   Circle = 'Circle',
   LineString = 'LineString',

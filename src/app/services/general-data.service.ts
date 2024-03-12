@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { FeatureType } from '../components/map/map.component';
 import WKT from 'ol/format/WKT';
-import { IGeoLocation } from '../models/geo-location';
+import { GeoLocation, IGeoLocation } from '../models/geo-location';
 import { Subject, of } from 'rxjs';
 import { Observable } from 'rxjs';
 import { LocAndUsers } from '../models/locAndUsers';
 import { CustomHttpClient } from './customHttpClient.service';
+import { UpdateLocation } from '../models/updateLocation';
 
 @Injectable({
   providedIn: 'root',
@@ -22,7 +23,10 @@ export class GeneralDataService {
   public createdFeature = new Subject<any>()
   public selectedOptions = new Subject<any>()
   public listData = new Subject<LocAndUsers[]>()
-  public mapFeature = new Subject<any>()
+  public mapFeature = new Subject<UpdateLocation>()
+  public featureUpdate = new Subject<boolean>()
+  // public featureUpdateCoordinates = new Subject<any>()
+  public featureUpdateGeneralData = new Subject<UpdateLocation>()
 
   // public modalAc = new Subject<any>()
   _featureType: FeatureType;
@@ -30,6 +34,11 @@ export class GeneralDataService {
   location:IGeoLocation;
   public _wkt:string
   locAndUsersList:LocAndUsers[];
+
+  isFeatureUpdate:boolean;
+  updatedLocation:IGeoLocation;
+   updatedWkt:string
+
   options = [
     // { value: 'default', text: '--Seçiniz--' },
     { value: 'Point', text: 'Point' },
@@ -54,7 +63,14 @@ export class GeneralDataService {
     });
     this._wkt=_wkt;
   }
-
+  updateGeometryToWkt(feature):string{
+    var format = new WKT();
+    const _wkt = format.writeGeometry(feature.getGeometry(), {
+      dataProjection: 'EPSG:4326',
+      featureProjection: 'EPSG:3857'
+    });
+    return _wkt;
+  }
   setLocation(data:IGeoLocation){
     this.location=data;
     this.isModalActive=true;
@@ -72,4 +88,19 @@ export class GeneralDataService {
       }
     });
   }
+
+  setFeatureUpdate(){
+
+  }
+  // setFeatureUpdate(){
+  //   this.featureUpdate.subscribe({
+  //     next:(data:boolean)=>{
+  //       this.isFeatureUpdate=data;
+  //     },
+  //     error:(err)=>{
+        
+  //     }
+  //   })
+  // }
+
 }
