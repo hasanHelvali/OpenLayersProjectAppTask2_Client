@@ -28,6 +28,9 @@ export class GeneralDataService {
   // public featureUpdateCoordinates = new Subject<any>()
   public featureUpdateGeneralData = new Subject<UpdateLocation>()
 
+  public primeNgModal = new Subject<any>()
+  public primeNgModalClosed = new Subject<boolean>()
+
   // public modalAc = new Subject<any>()
   _featureType: FeatureType;
   isModalActive:boolean=false;;

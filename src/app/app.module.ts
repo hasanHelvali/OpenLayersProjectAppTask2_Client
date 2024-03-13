@@ -14,6 +14,11 @@ import { MatDialogModule} from '@angular/material/dialog';
 import {MatButtonModule} from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
 import { UpdateModalComponent } from './components/update-modal/update-modal.component';
+import { PrimeNgModalComponent } from './components/prime-ng-modal/prime-ng-modal.component';
+import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
+import { TreeTableModule } from 'primeng/treetable';
+import { TreeModule } from 'primeng/tree';
 @NgModule({
   declarations: [
     AppComponent,
@@ -21,6 +26,7 @@ import { UpdateModalComponent } from './components/update-modal/update-modal.com
     MyModalComponent,
     GeometryListModalComponent,
     UpdateModalComponent,
+    PrimeNgModalComponent,
   ],
   imports: [
     BrowserModule,
@@ -31,7 +37,11 @@ import { UpdateModalComponent } from './components/update-modal/update-modal.com
     BrowserAnimationsModule,
     MatDialogModule,
     MatButtonModule,
-    MatTableModule
+    MatTableModule,
+    DialogModule,
+    ButtonModule,
+    TreeModule,
+    TreeTableModule
   ],
   providers: [{provide:"baseUrl",useValue:"https://localhost:7295/api"},MyModalComponent,GeometryListModalComponent,UpdateModalComponent],
   bootstrap: [AppComponent]

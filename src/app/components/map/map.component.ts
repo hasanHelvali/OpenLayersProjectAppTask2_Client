@@ -134,7 +134,23 @@ export class MapComponent extends BaseComponent implements OnInit {
         this.changeDetectorRef.detectChanges()
         },
     });
+    this.generalDataService.primeNgModal.subscribe({
+      next:(data)=>{
+        // this.isFeatureChanged=data as boolean
+        this.primeNgModalFeature(data)
+        this.changeDetectorRef.detectChanges()
+        },
+    });
+    this.generalDataService.primeNgModalClosed.subscribe({
+      next:(data )=>{
+        if(data as boolean == true){
+          this.primeNgModalClosed();
+        }
+        this.changeDetectorRef.detectChanges()
+        },
+    });
   }
+  
   addLayer() {
     this.vectorLayer = new VectorLayer({
       source: new VectorSource(),
@@ -228,7 +244,7 @@ export class MapComponent extends BaseComponent implements OnInit {
     this.updateModal.openModal()
   }
 
-  wktToMapFeature(_data:UpdateLocation){
+  wktToMapFeature(_data?:UpdateLocation){
     this.vectorLayer.getSource().clear();
     var format=new WKT();
     const feature = format.readFeature(_data.wkt,{
@@ -272,6 +288,21 @@ export class MapComponent extends BaseComponent implements OnInit {
       // Değişiklikler tamamlandı
     });
 }
+    primeNgModalFeature(wkt){
+      console.log(wkt);
+    this.vectorLayer.getSource().clear();
+    var format=new WKT();
+    const feature = format.readFeature(wkt,{
+      dataProjection:'EPSG:4326',
+      featureProjection: 'EPSG:3857'
+    })
+    const source =this.vectorLayer.getSource();
+    source.addFeature(feature);
+    this.map.getView().fit(feature.getGeometry() as any,{padding:[40,40,40,40],duration:1000})    
+    }
+    primeNgModalClosed(){
+      this.vectorLayer.getSource().clear();
+    }
   }
 export enum FeatureType {
   Circle = 'Circle',
