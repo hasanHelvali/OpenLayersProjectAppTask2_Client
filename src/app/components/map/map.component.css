@@ -31,6 +31,13 @@
   right: 3px; 
   z-index: 1;
 }
+#typeButton4{
+  position: absolute;
+  top: 250px;
+  width: 8rem;
+  right: 3px; 
+  z-index: 1;
+}
 form{
   width: 10px;
 }

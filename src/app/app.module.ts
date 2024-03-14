@@ -19,6 +19,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { TreeTableModule } from 'primeng/treetable';
 import { TreeModule } from 'primeng/tree';
+import { IntersectionComponent } from './components/intersection/intersection.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -27,6 +28,7 @@ import { TreeModule } from 'primeng/tree';
     GeometryListModalComponent,
     UpdateModalComponent,
     PrimeNgModalComponent,
+    IntersectionComponent,
   ],
   imports: [
     BrowserModule,

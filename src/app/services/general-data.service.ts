@@ -7,6 +7,7 @@ import { Observable } from 'rxjs';
 import { LocAndUsers } from '../models/locAndUsers';
 import { CustomHttpClient } from './customHttpClient.service';
 import { UpdateLocation } from '../models/updateLocation';
+import { CustomIntersection } from '../models/intersection';
 
 @Injectable({
   providedIn: 'root',
@@ -27,9 +28,16 @@ export class GeneralDataService {
   public featureUpdate = new Subject<boolean>()
   // public featureUpdateCoordinates = new Subject<any>()
   public featureUpdateGeneralData = new Subject<UpdateLocation>()
-
+  
   public primeNgModal = new Subject<any>()
   public primeNgModalClosed = new Subject<boolean>()
+  
+  public startIntersection = new Subject<boolean>()
+  public closeIntersection= new Subject<any>()
+  public modelIntersection= new Subject<any>()
+  public intersectionActive= new Subject<boolean>()
+  public noPopup= new Subject<any>()
+  // public hdms= new Subject<string>()
 
   // public modalAc = new Subject<any>()
   _featureType: FeatureType;
@@ -65,6 +73,7 @@ export class GeneralDataService {
       featureProjection: 'EPSG:3857'
     });
     this._wkt=_wkt;
+    return _wkt;
   }
   updateGeometryToWkt(feature):string{
     var format = new WKT();

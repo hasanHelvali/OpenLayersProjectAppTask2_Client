@@ -10,7 +10,7 @@ import Map from 'ol/Map';
 import { Draw, Modify, Snap } from 'ol/interaction';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
-import { fromLonLat, get } from 'ol/proj';
+import { fromLonLat, get, toLonLat } from 'ol/proj';
 import OSM from 'ol/source/OSM';
 import VectorSource from 'ol/source/Vector';
 import { MyModalComponent } from '../my-modal/my-modal.component';
@@ -19,23 +19,20 @@ import { Circle, Geometry, LineString, Point, Polygon } from 'ol/geom';
 import { BaseComponent } from 'src/app/common/base/base.component';
 import { NgxSpinnerService } from 'ngx-spinner';
 import { GeneralDataService } from 'src/app/services/general-data.service';
-import Style from 'ol/style/Style';
-import Stroke from 'ol/style/Stroke';
-import Fill from 'ol/style/Fill';
-import { Collection, Observable, View } from 'ol';
+import { Collection, Observable, Overlay, View } from 'ol';
 import { LocalizedString } from '@angular/compiler';
 import { IGeoLocation } from 'src/app/models/geo-location';
-import Layer from 'ol/layer/Layer';
-import BaseLayer from 'ol/layer/Base';
 import { CustomHttpClient } from 'src/app/services/customHttpClient.service';
 import { LocAndUsers } from 'src/app/models/locAndUsers';
 import { GeometryListModalComponent } from '../geometry-list-modal/geometry-list-modal.component';
 import { MatDialog } from '@angular/material/dialog';
-import { format } from 'ol/coordinate';
 import WKT from 'ol/format/WKT';
-import VectorImageLayer from 'ol/layer/VectorImage';
 import { UpdateModalComponent } from '../update-modal/update-modal.component';
 import { UpdateLocation } from 'src/app/models/updateLocation';
+import { PointWKT } from 'src/app/models/pointWkt';
+import { Tooltip } from 'primeng/tooltip';
+import { overlapsType } from 'ol/expr/expression';
+import { toStringHDMS } from 'ol/coordinate';
 @Component({
   selector: 'app-map',
   templateUrl: './map.component.html',
@@ -50,6 +47,20 @@ export class MapComponent extends BaseComponent implements OnInit {
   locAndUsersList:LocAndUsers[];
   snap:any;
   isFeatureChanged=false;
+  intersection:LocAndUsers=new LocAndUsers();
+  pixel:any;
+
+  container = document.getElementById('popup');
+   overlay = new Overlay({
+    element: this.container,
+    autoPan: {
+      animation: {
+        duration: 250,
+      },
+    },
+  });
+  
+
   constructor(
     ngxSpinner: NgxSpinnerService,
     public generalDataService: GeneralDataService,
@@ -59,13 +70,10 @@ export class MapComponent extends BaseComponent implements OnInit {
     private geometryListModal:GeometryListModalComponent,
     public dialog: MatDialog,
     public updateModal:UpdateModalComponent,
-    private readonly changeDetectorRef: ChangeDetectorRef
+    private readonly changeDetectorRef: ChangeDetectorRef,
     ) {
       super(ngxSpinner);
-      
     }
-    // var draw, snap; 
-    // getGeometryByWkt(veri) {}
     
   ngOnInit(): void {
     this.map = new Map({
@@ -144,8 +152,23 @@ export class MapComponent extends BaseComponent implements OnInit {
     this.generalDataService.primeNgModalClosed.subscribe({
       next:(data )=>{
         if(data as boolean == true){
-          this.primeNgModalClosed();
+          this.clearFeature();
         }
+        this.changeDetectorRef.detectChanges()
+        },
+    });
+
+    this.generalDataService.startIntersection.subscribe({
+      next:(data )=>{
+        if(data as boolean == true){
+          this.startIntersection();
+        }
+        this.changeDetectorRef.detectChanges()
+        },
+    });
+    this.generalDataService.closeIntersection.subscribe({
+      next:(data )=>{
+        this.closeToolTip();
         this.changeDetectorRef.detectChanges()
         },
     });
@@ -300,10 +323,97 @@ export class MapComponent extends BaseComponent implements OnInit {
     source.addFeature(feature);
     this.map.getView().fit(feature.getGeometry() as any,{padding:[40,40,40,40],duration:1000})    
     }
-    primeNgModalClosed(){
+
+
+    startIntersection(){
+      // this.closeToolTip()
+      this.changeDetectorRef.detectChanges();
       this.vectorLayer.getSource().clear();
-    }
+      let that=this;
+      // this.clearFeature();
+      // this.clearInteraction();
+      // this.startIntersection();
+      // this.map.addInteraction("Point");
+      const drawInteraction = new Draw({
+        type: "Point", // Çizilebilecek şekil türünü (Point, LineString, Polygon) seciyorum
+      });//point olusuturukldu
+      this.map.addInteraction(drawInteraction);//Point seklindeki interaction haritaya eklendi.
+
+      drawInteraction.on('drawend', function (event) {
+        var feature = event.feature;
+        var geometry = feature.getGeometry() as any;
+        var coordinates= geometry.getCoordinates();
+        
+        const _type: FeatureType = event.feature
+          .getGeometry()
+          .getType() as FeatureType;
+        var geometry = feature.getGeometry() as any;
+        console.log(feature.getGeometry());
+        var format = new WKT();
+        const _locWkt = format.writeGeometry(feature.getGeometry(), {
+          dataProjection: 'EPSG:4326',
+          featureProjection: 'EPSG:3857'
+        });
+        that.showSpinner();
+        var pointWKT:PointWKT=new PointWKT();
+        pointWKT.pointWKT=_locWkt
+
+        that.showSpinner();
+        that.httpCLientService.post<any>({controller:"maps",action:"InteractionExists"},pointWKT).subscribe({
+          next:(data)=>{
+            that.hideSpinner();
+            if(data==null){
+              // console.log("null");
+              // alert("Kesişim Yok.")
+              that.generalDataService.modelIntersection.next("Bir Kesişim Bulunamadı.");
+              that.overlay.setPosition(coordinates);
+              // that.closeToolTip();<
+              //  this.overlay.setPosition(undefined);
+              that.generalDataService.intersectionActive.next(false);
+
+              that.vectorLayer.getSource().clear()
+              // that.clearInteraction()
+               that.changeDetectorRef.detectChanges()
+              return 
+            }
+            that.intersection=data as LocAndUsers;
+            that.overlay = new Overlay({
+              element: document.getElementById('popup'),
+              autoPan: true,
+            });
+
+            that.map.addOverlay(that.overlay);
+            const hdms = toStringHDMS(toLonLat(coordinates));
+            that.generalDataService.modelIntersection.next({hdms:hdms,name:data.name });
+            that.overlay?.setPosition(coordinates);
+            that.vectorLayer.getSource().addFeature(feature);
+            that.changeDetectorRef.detectChanges();
+          },
+          error:(err)=>{
+            alert("Analiz Yapılamadı.")
+            that.hideSpinner();
+            that.closeToolTip();
+          }
+        }) 
+        
+
+
+        that.map.on('click', (event) => {
+           that.clearFeature()
+           that.pixel = event.pixel
+        });
+        })
   }
+  closeToolTip(){
+    this.vectorLayer.getSource().clear()
+    console.log("-----------------");
+    this.clearInteraction();
+   this.overlay.setPosition(undefined);
+  //  this.overlay.dispose();
+   this.generalDataService.intersectionActive.next(false);
+   this.changeDetectorRef.detectChanges();
+  }
+}
 export enum FeatureType {
   Circle = 'Circle',
   LineString = 'LineString',
