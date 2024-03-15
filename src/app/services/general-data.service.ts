@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { ChangeDetectorRef, Injectable } from '@angular/core';
 import { FeatureType } from '../components/map/map.component';
 import WKT from 'ol/format/WKT';
 import { GeoLocation, IGeoLocation } from '../models/geo-location';

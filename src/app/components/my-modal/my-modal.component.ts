@@ -96,6 +96,7 @@ export class MyModalComponent extends BaseComponent implements OnInit {
     this.generalDataService.isModalActive = false;
     this.generalDataService.closedModal.next('Modal Kapatıldı.');
     this.generalDataService.selectedOptions.next('');
+    this.changeDetectorRef.detectChanges()
   }
   save(name: string) {
     this.showSpinner();

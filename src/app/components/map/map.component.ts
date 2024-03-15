@@ -7,7 +7,7 @@ import {
   numberAttribute,
 } from '@angular/core';
 import Map from 'ol/Map';
-import { Draw, Modify, Snap } from 'ol/interaction';
+import { Draw, Interaction, Modify, MouseWheelZoom, Snap } from 'ol/interaction';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
 import { fromLonLat, get, toLonLat } from 'ol/proj';
@@ -49,6 +49,7 @@ export class MapComponent extends BaseComponent implements OnInit {
   isFeatureChanged=false;
   intersection:LocAndUsers=new LocAndUsers();
   pixel:any;
+  drawInteraction:Draw;
 
   container = document.getElementById('popup');
    overlay = new Overlay({
@@ -108,6 +109,8 @@ export class MapComponent extends BaseComponent implements OnInit {
       next:()=>{
       this.clearInteraction();
       this.clearFeature();
+      this.options="";
+      this.changeDetectorRef.detectChanges();
       },
       error:()=>{
         alert("Veri Gelmedi.");
@@ -178,8 +181,9 @@ export class MapComponent extends BaseComponent implements OnInit {
     this.vectorLayer = new VectorLayer({
       source: new VectorSource(),
       style: {
-        'fill-color': 'rgba(255, 255, 255, 0.2)',
-        'stroke-color': '#ffcc33',
+        // 'fill-color': 'rgba(255, 255, 255, 0.2)',
+        'fill-color': 'rgba(0, 0, 0, 0.3)',
+        'stroke-color': '#000',
         'stroke-width': 2,
         'circle-radius': 7,
         'circle-fill-color': '#ffcc33',
@@ -189,16 +193,26 @@ export class MapComponent extends BaseComponent implements OnInit {
     this.map.addLayer(this.vectorLayer);
   }
   addFeature(value: string) {
+    if(value=="") {
+      this.map.removeInteraction(this.drawInteraction)
+      return;
+    }
+
     this.vectorLayer.getSource().clear();
-    this.options=""
     this.generalDataService.selectedOptions.next(value)
+    this.options=value;
+    var a =new VectorLayer();
+    
     let that = this;
+    // this.generalDataService.getFeatureType(""); //service deki feature tipini guncellestiriyorum.
     this.generalDataService.getFeatureType(value); //service deki feature tipini guncellestiriyorum.
-    const drawInteraction = new Draw({
+    that.drawInteraction = new Draw({
       type: this.generalDataService._featureType, // Çizilebilecek şekil türünü (Point, LineString, Polygon) seciyorum
     });
-    that.map.removeInteraction(drawInteraction)
-    this.map.addInteraction(drawInteraction); //interaction i map e ekliyorum.
+    
+    this.map.addInteraction(that.drawInteraction); //interaction i map e ekliyorum.
+    // this.changeDetectorRef.detectChanges();
+    
     // vectorLayer.getSource().clear()
     this.map.on('click', (event) => {
       //her click edildiginde
@@ -206,7 +220,7 @@ export class MapComponent extends BaseComponent implements OnInit {
       const coordinateLat = event.coordinate[1];
     });
 
-    drawInteraction.on('drawend', function (event) {
+    that.drawInteraction.on('drawend', function (event) {
       that.generalDataService.setLocation(null);
       that.generalDataService._wkt=null;
       //cizim bittiginde
@@ -215,8 +229,11 @@ export class MapComponent extends BaseComponent implements OnInit {
       const _type: FeatureType = event.feature
         .getGeometry()
         .getType() as FeatureType;
+        console.log(_type);
+        
       if(feature){
         that.generalDataService.createdFeature.next("Feature Olusturuldu.");
+        // that.map.removeInteraction(that.drawInteraction)
       }
       that.vectorLayer.getSource().addFeature(feature);
       var geometry = feature.getGeometry() as any;
@@ -377,6 +394,7 @@ export class MapComponent extends BaseComponent implements OnInit {
               return 
             }
             that.intersection=data as LocAndUsers;
+            
             that.overlay = new Overlay({
               element: document.getElementById('popup'),
               autoPan: true,
@@ -401,6 +419,7 @@ export class MapComponent extends BaseComponent implements OnInit {
         that.map.on('click', (event) => {
            that.clearFeature()
            that.pixel = event.pixel
+           that.changeDetectorRef.detectChanges()
         });
         })
   }
